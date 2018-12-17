@@ -1,0 +1,10 @@
+docopt
+imageio
+matplotlib
+numpy
+pillow
+scipy
+tensorflow-gpu
+torch
+torchvision
+pandas
