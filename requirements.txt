@@ -8,3 +8,5 @@ tensorflow-gpu
 torch
 torchvision
 pandas
+keras
+seaborn
