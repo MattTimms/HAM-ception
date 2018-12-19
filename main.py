@@ -17,30 +17,57 @@ from common.tensorboard_logger import TensorboardLogger
 import pandas as pd
 from glob import glob
 
-lesion_type_dict = {
-    'nv': 'Melanocytic nevi',
-    'mel': 'Melanoma',
-    'bkl': 'Benign keratosis-like lesions ',
-    'bcc': 'Basal cell carcinoma',
-    'akiec': 'Actinic keratoses',
-    'vasc': 'Vascular lesions',
-    'df': 'Dermatofibroma'
-}
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import os
+from glob import glob
+from PIL import Image
+
+from sklearn.metrics import confusion_matrix
+import itertools
+
+import keras
+from keras.utils.np_utils import to_categorical # used for converting labels to one-hot-encoding
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D, BatchNormalization
+from keras import backend as K
+from keras.preprocessing.image import ImageDataGenerator
 
 
-base_skin_dir = os.path.join('dataset', 'skin-cancer-mnist-ham10000')
+def main():
+    lesion_type_dict = {
+        'nv': 'Melanocytic nevi',
+        'mel': 'Melanoma',
+        'bkl': 'Benign keratosis-like lesions ',
+        'bcc': 'Basal cell carcinoma',
+        'akiec': 'Actinic keratoses',
+        'vasc': 'Vascular lesions',
+        'df': 'Dermatofibroma'
+    }
 
-# Merge images from both folders into one dictionary
-imageid_path_dict = {os.path.splitext(os.path.basename(x))[0]: x
-                     for x in glob(os.path.join(base_skin_dir, '*', '*.jpg'))}
+
+    base_skin_dir = os.path.join('dataset', 'skin-cancer-mnist-ham10000')
+
+    # Merge images from both folders into one dictionary
+    imageid_path_dict = {os.path.splitext(os.path.basename(x))[0]: x
+                         for x in glob(os.path.join(base_skin_dir, '*', '*.jpg'))}
 
 
-# Read in the csv of metadata
-tile_df = pd.read_csv(os.path.join(base_skin_dir, 'HAM10000_metadata.csv'))
+    # Read in the csv of metadata
+    tile_df = pd.read_csv(os.path.join(base_skin_dir, 'HAM10000_metadata.csv'))
 
-tile_df['path'] = tile_df['image_id'].map(imageid_path_dict.get)
-tile_df['cell_type'] = tile_df['dx'].map(lesion_type_dict.get)
-tile_df['cell_type_idx'] = pd.Categorical(tile_df['cell_type']).codes
-tile_df.sample(5)
+    tile_df['path'] = tile_df['image_id'].map(imageid_path_dict.get)
+    tile_df['cell_type'] = tile_df['dx'].map(lesion_type_dict.get)
+    tile_df['cell_type_idx'] = pd.Categorical(tile_df['cell_type']).codes
+    print(tile_df.sample(5))
 
-# use 20 as validation
+    # use 20 as validation
+
+    input_dims = (50, 50)
+    input_shape = input_dims + (3,)
+    tile_df['image'] = tile_df['path'].map(lambda x: np.asarray(Image.open(x).resize(input_dims)))
+
+
+if __name__ == '__main__':
+    main()
