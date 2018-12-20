@@ -38,7 +38,6 @@ from keras.preprocessing.image import ImageDataGenerator
 
 # Todo: At some point it might be useful to use another framework like Pytorch and see how that compares to Tensorflow.
 
-
 def main():
     base_skin_dir = os.path.join('dataset/skin-cancer-mnist-ham10000')
 

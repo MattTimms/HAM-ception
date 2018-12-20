@@ -24,15 +24,14 @@ import os
 from glob import glob
 from PIL import Image
 
-from sklearn.metrics import confusion_matrix
-import itertools
 
-import keras
-from keras.utils.np_utils import to_categorical # used for converting labels to one-hot-encoding
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, Conv2D, MaxPool2D, BatchNormalization
-from keras import backend as K
-from keras.preprocessing.image import ImageDataGenerator
+# load csv's
+# dataload images w/ transforms
+# import inception
+# freeze layers
+# train
+# evaluate input
+# evaluate output
 
 
 def main():
