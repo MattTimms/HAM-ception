@@ -10,3 +10,5 @@ torchvision
 pandas
 keras
 seaborn
+scikit-learn
+scikit-image

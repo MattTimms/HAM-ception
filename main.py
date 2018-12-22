@@ -11,18 +11,16 @@ import torch.optim as optim
 import torch.utils.data
 import torchvision.utils as vutils
 
-from common.data_loader import import_dataset
+from common.data_loader import import_ham10000
 from common.tensorboard_logger import TensorboardLogger
-
-import pandas as pd
-from glob import glob
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import os
-from glob import glob
-from PIL import Image
+
+from torch.optim import lr_scheduler
+import torchvision.models as models
 
 
 # load csv's
@@ -38,34 +36,70 @@ def main():
     lesion_type_dict = {
         'nv': 'Melanocytic nevi',
         'mel': 'Melanoma',
-        'bkl': 'Benign keratosis-like lesions ',
+        'bkl': 'Benign keratosis-like lesions',
         'bcc': 'Basal cell carcinoma',
         'akiec': 'Actinic keratoses',
         'vasc': 'Vascular lesions',
         'df': 'Dermatofibroma'
     }
 
+    model = models.inception_v3(pretrained=True)
 
-    base_skin_dir = os.path.join('dataset', 'skin-cancer-mnist-ham10000')
+    dir_dataset = './dataset/skin-cancer-mnist-ham10000/'
+    dataset = import_ham10000(dataset_root=dir_dataset)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=int(opt.workers))
+    n_class = 6  # pull from dataset output classes
 
-    # Merge images from both folders into one dictionary
-    imageid_path_dict = {os.path.splitext(os.path.basename(x))[0]: x
-                         for x in glob(os.path.join(base_skin_dir, '*', '*.jpg'))}
+    # Print layers
+    for name, child in model.named_children():
+        for name2, params in child.named_parameters():
+            print(name, name2, 'frozen=%r' % params.requires_grad)
+
+    # Freeze all layers
+    for params in model.parameters():
+        params.requires_grad = False
+
+    # Replace final layer
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, n_class)
+
+    # Stage-2 , Freeze all the layers till "Conv2d_4a_3*3"
+    ct = []
+    for name, child in model.named_children():
+        if "Conv2d_4a_3x3" in ct:
+            for params in child.parameters():
+                params.requires_grad = True
+        ct.append(name)
+
+    data_dir = "data/"
+    input_shape = 299
+    batch_size = 32
+    mean = [0.5, 0.5, 0.5]
+    std = [0.5, 0.5, 0.5]
+    scale = 360
+    input_shape = 244
+    use_parallel = True
+    use_gpu = True
+    epochs = 100
+
+    if opt.cuda and torch.cuda.is_available():
+        device = torch.device("cuda:0")
+    else:
+        device = torch.device("cpu")
 
 
-    # Read in the csv of metadata
-    tile_df = pd.read_csv(os.path.join(base_skin_dir, 'HAM10000_metadata.csv'))
+    criterion = nn.CrossEntropyLoss()
+    optimizer_conv = optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())), lr=0.001, momentum=0.9)
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
 
-    tile_df['path'] = tile_df['image_id'].map(imageid_path_dict.get)
-    tile_df['cell_type'] = tile_df['dx'].map(lesion_type_dict.get)
-    tile_df['cell_type_idx'] = pd.Categorical(tile_df['cell_type']).codes
-    print(tile_df.sample(5))
+    model_ft = train_model(model, dataloaders, dataset_sizes, criterion, optimizer_conv, exp_lr_scheduler, use_gpu,
+                           num_epochs=epochs)
 
-    # use 20 as validation
+    model_save_loc = args.save_loc + args.model_name + "_" + str(args.freeze_layers) + "_freeze" + "_" + str(
+        args.freeze_initial_layers) + "_freeze_initial_layer" + ".pth"
+    torch.save(model_ft.state_dict(), model_save_loc)
 
-    input_dims = (50, 50)
-    input_shape = input_dims + (3,)
-    tile_df['image'] = tile_df['path'].map(lambda x: np.asarray(Image.open(x).resize(input_dims)))
+
 
 
 if __name__ == '__main__':
