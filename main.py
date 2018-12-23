@@ -23,7 +23,6 @@ from torch.optim import lr_scheduler
 import torchvision.models as models
 
 
-# load csv's
 # dataload images w/ transforms
 # import inception
 # freeze layers
@@ -100,6 +99,10 @@ def main():
     torch.save(model_ft.state_dict(), model_save_loc)
 
 
+def main():  # Fixes a known issue when running PyTorch on Windows OS
+    # Start learning
+    for epoch in range(opt.niter):
+        for i, (images, metas) in enumerate(dataloader):
 
 
 if __name__ == '__main__':

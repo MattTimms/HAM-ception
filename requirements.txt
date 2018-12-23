@@ -12,3 +12,4 @@ keras
 seaborn
 scikit-learn
 scikit-image
+tqdm
