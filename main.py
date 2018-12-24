@@ -1,9 +1,7 @@
 from __future__ import print_function, division
-import random
 import os
 import numpy as np
 import torch
-import argparse
 import logging
 import torch.nn as nn
 import torch.backends.cudnn as cudnn
@@ -14,39 +12,26 @@ import torchvision.utils as vutils
 from common.data_loader import import_ham10000
 from common.tensorboard_logger import TensorboardLogger
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import os
-
 from torch.optim import lr_scheduler
 import torchvision.models as models
+import time
+
+from torch.autograd import Variable
+from tqdm import tqdm
 
 
-# dataload images w/ transforms
-# import inception
-# freeze layers
-# train
-# evaluate input
-# evaluate output
-
+# Hyper parameters
+batch_size = 32
+num_epochs = 100
 
 def main():
-    lesion_type_dict = {
-        'nv': 'Melanocytic nevi',
-        'mel': 'Melanoma',
-        'bkl': 'Benign keratosis-like lesions',
-        'bcc': 'Basal cell carcinoma',
-        'akiec': 'Actinic keratoses',
-        'vasc': 'Vascular lesions',
-        'df': 'Dermatofibroma'
-    }
+
 
     model = models.inception_v3(pretrained=True)
 
     dir_dataset = './dataset/skin-cancer-mnist-ham10000/'
     dataset = import_ham10000(dataset_root=dir_dataset)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=int(opt.workers))
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True, num_workers=1)
     n_class = 6  # pull from dataset output classes
 
     # Print layers
@@ -70,39 +55,28 @@ def main():
                 params.requires_grad = True
         ct.append(name)
 
-    data_dir = "data/"
-    input_shape = 299
-    batch_size = 32
-    mean = [0.5, 0.5, 0.5]
-    std = [0.5, 0.5, 0.5]
-    scale = 360
-    input_shape = 244
-    use_parallel = True
-    use_gpu = True
-    epochs = 100
 
-    if opt.cuda and torch.cuda.is_available():
+
+    if True and torch.cuda.is_available():
         device = torch.device("cuda:0")
     else:
         device = torch.device("cpu")
 
+    # device = torch.device("cpu")
+    model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer_conv = optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())), lr=0.001, momentum=0.9)
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
-
-    model_ft = train_model(model, dataloaders, dataset_sizes, criterion, optimizer_conv, exp_lr_scheduler, use_gpu,
-                           num_epochs=epochs)
-
-    model_save_loc = args.save_loc + args.model_name + "_" + str(args.freeze_layers) + "_freeze" + "_" + str(
-        args.freeze_initial_layers) + "_freeze_initial_layer" + ".pth"
-    torch.save(model_ft.state_dict(), model_save_loc)
+    optimizer = optim.SGD(list(filter(lambda p: p.requires_grad, model.parameters())), lr=0.001, momentum=0.9)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
 
-def main():  # Fixes a known issue when running PyTorch on Windows OS
-    # Start learning
-    for epoch in range(opt.niter):
-        for i, (images, metas) in enumerate(dataloader):
+    ## Training
+    from training import train_model
+    model = train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler, device, num_epochs=25):
+
+
+    # model_save_loc = "1" + ".pth"
+    # torch.save(model_ft.state_dict(), model_save_loc)
 
 
 if __name__ == '__main__':
