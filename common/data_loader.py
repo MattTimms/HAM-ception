@@ -55,22 +55,28 @@ class HAMDataset(Dataset):
         return len(self.ham_frame)
 
     def __getitem__(self, idx):
-        if self.training is True:
-            img_name = os.path.join(self.root_dir, 'HAM10000_images_part_1', self.ham_frame.iloc[idx, 1] + '.jpg')
-            if not os.path.exists(img_name):
-                img_name = os.path.join(self.root_dir, 'HAM10000_images_part_2', self.ham_frame.iloc[idx, 1] + '.jpg')
+        # Collect image name from csv frame
+        img_name = os.path.join(self.root_dir, 'HAM10000_images_part_1', self.ham_frame.iloc[idx, 1] + '.jpg')
+        if not os.path.exists(img_name):
+            img_name = os.path.join(self.root_dir, 'HAM10000_images_part_2', self.ham_frame.iloc[idx, 1] + '.jpg')
 
-            image = Image.open(img_name).convert('RGB')
-            if self.transform:
-                image = self.transform(image)
+        # Load image
+        image = Image.open(img_name).convert('RGB')
+        if self.transform:
+            image = self.transform(image)
 
-            meta = self.ham_frame.iloc[0, :].drop('image_id').values.tolist()
-            if self.minimal:
-                meta = self.dict[meta[1]]
+        # Load meta
+        meta = self.ham_frame.iloc[0, :].drop('image_id').values.tolist()
+        if self.minimal:
+            meta = self.dict[meta[1]]
 
-            return image, meta
+        return image, meta
 
     def _create_test_images(self):
+        """
+        Creates test folder populated with randomly selected samples from HAM dataset, if folder does not already exist,
+        and removes them from the returned Dataset instance.
+        """
         if not os.path.exists(self.dir_test):
             os.makedirs(self.dir_test)
 
@@ -90,9 +96,12 @@ class HAMDataset(Dataset):
                 img_out = os.path.join(self.dir_test, frame[1] + '.jpg')
                 shutil.copy(img_path, img_out)
         else:
-            file_paths = [os.path.splitext(fp)[0] for fp in os.listdir(os.path.join(self.dir_test))]
-            for fp in file_paths:
-                idx = self.ham_frame.index[self.ham_frame['image_id'] == fp].tolist()
+            # Collect image names
+            file_names = [os.path.splitext(fp)[0] for fp in os.listdir(os.path.join(self.dir_test))]
+
+            # Remove image meta data from pandas frame
+            for fn in file_names:
+                idx = self.ham_frame.index[self.ham_frame['image_id'] == fn].tolist()
                 self.ham_frame.drop(idx, inplace=True)
 
     def _load_test_images(self):
@@ -104,9 +113,10 @@ class HAMDataset(Dataset):
         if not file_names:
             raise HAMDatasetException("Test folder is empty: %s" % self.dir_test)
 
+        # Create new pandas frame with test image meta data
         new_frame = None
-        for fp in file_names:
-            idx = self.ham_frame.index[self.ham_frame['image_id'] == fp].tolist()
+        for fn in file_names:
+            idx = self.ham_frame.index[self.ham_frame['image_id'] == fn].tolist()
             frame = self.ham_frame.iloc[idx, :]
 
             if new_frame is None:
