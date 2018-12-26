@@ -25,7 +25,7 @@ def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler
         running_corrects = 0  # ttl num of correct predictions
 
         for inputs, metas in tqdm(dataloader):
-            labels = metas
+            labels = metas.to(device)
             inputs = Variable(inputs).to(device)
 
             # Zero parameter gradients
@@ -39,14 +39,14 @@ def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler
 
             # Calculate loss
             _, preds = torch.max(outputs.data, 1)
-            loss = criterion(outputs, labels.to(device))
+            loss = criterion(outputs, labels)
 
             # Backward + optimize
             loss.backward()
             optimizer.step()
 
             running_loss += loss.data
-            running_corrects += torch.sum(preds.cpu() == labels.data)
+            running_corrects += torch.sum(preds == labels.data).data
 
         epoch_loss = running_loss.item() / dataset_size
         epoch_acc = running_corrects.item() / dataset_size

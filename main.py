@@ -28,7 +28,7 @@ parser.add_argument('--dataroot', type=str, default='./dataset/skin-cancer-mnist
 parser.add_argument('--training', action='store_true', help='train model')
 parser.add_argument('--model_path', default='./ham_model.pth', help='folder to output images and model checkpoints')
 parser.add_argument('--cuda', action='store_true', help='enables CUDA and GPU usage')
-parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
+parser.add_argument('--workers', type=int, help='number of data loading workers', default=8)
 parser.add_argument('--epochs', type=int, help='number of training epochs', default=10)
 parser.add_argument('--batch_size', type=int, default=32, help='input batch size')
 opt = parser.parse_args()
@@ -61,6 +61,7 @@ def main():
         device = torch.device("cuda:0")
     else:
         device = torch.device("cpu")
+    print("Using", device)
     model.to(device)  # Move model to device
 
     # Model training parameters
@@ -74,7 +75,7 @@ def main():
     # # Training
     if opt.training:
         model = train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device,
-                            logger_tensorboard, num_epochs=opt.num_epochs)
+                            logger_tensorboard, num_epochs=opt.epochs)
         torch.save(model.state_dict(), opt.model_path)
 
     # # Testing
