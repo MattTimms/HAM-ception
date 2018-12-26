@@ -1,6 +1,3 @@
-""" training functions
-src: https://github.com/Prakashvanapalli/pytorch_classifiers/blob/master/tars/tars_training.py
-"""
 from __future__ import print_function, division
 import time
 
@@ -39,7 +36,7 @@ def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler
 
             # Calculate loss
             _, preds = torch.max(outputs.data, 1)
-            loss = criterion(outputs, labels)
+            loss = criterion(outputs.data, labels)
 
             # Backward + optimize
             loss.backward()
@@ -83,7 +80,7 @@ def test_model(model, dataloader, dataset_size, criterion, device):
     running_corrects = 0  # ttl num of correct predictions
 
     for inputs, metas in tqdm(dataloader):
-        labels = metas
+        labels = metas.to(device)
         inputs = Variable(inputs).to(device)
 
         # Forward pass
@@ -94,12 +91,12 @@ def test_model(model, dataloader, dataset_size, criterion, device):
 
         # Calculate loss
         _, preds = torch.max(outputs.data, 1)
-        loss = criterion(outputs, labels.to(device))
+        loss = criterion(outputs, labels)
 
         running_loss += loss.data
-        running_corrects += torch.sum(preds.cpu() == labels.data)
+        running_corrects += torch.sum(preds == labels.data).data
 
-    model_loss = running_loss / dataset_size
-    model_acc = running_corrects / dataset_size
+    model_loss = running_loss.item() / dataset_size
+    model_acc = running_corrects.item() / dataset_size
 
     print('Loss: {:.4f} Acc: {:.4f}\n'.format(model_loss, model_acc))

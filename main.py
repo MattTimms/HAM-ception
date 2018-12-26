@@ -9,6 +9,7 @@ Usage:
 """
 from __future__ import print_function, division
 import argparse
+import os
 
 import torch
 import torch.nn as nn
@@ -28,7 +29,7 @@ parser.add_argument('--dataroot', type=str, default='./dataset/skin-cancer-mnist
 parser.add_argument('--training', action='store_true', help='train model')
 parser.add_argument('--model_path', default='./ham_model.pth', help='folder to output images and model checkpoints')
 parser.add_argument('--cuda', action='store_true', help='enables CUDA and GPU usage')
-parser.add_argument('--workers', type=int, help='number of data loading workers', default=8)
+parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--epochs', type=int, help='number of training epochs', default=10)
 parser.add_argument('--batch_size', type=int, default=32, help='input batch size')
 opt = parser.parse_args()
@@ -40,6 +41,10 @@ def main():
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True,
                                              num_workers=opt.workers)
     n_class = dataset.NUM_CLASS
+
+    # Check you can write to output path directory
+    if not os.access(os.path.split(opt.model_path)[0], os.W_OK):
+        raise ValueError("--model_path is not a writeable path: %s" % opt.model_path)
 
     # Load InceptionV3 network
     model = models.inception_v3(pretrained=True)
@@ -70,7 +75,7 @@ def main():
     scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
     # Initiate TensorBoard logger
-    logger_tensorboard = TensorboardLogger(log_dir=opt.model_path)
+    logger_tensorboard = TensorboardLogger(log_dir=os.path.split(opt.model_path)[0])
 
     # # Training
     if opt.training:
