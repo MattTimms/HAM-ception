@@ -24,11 +24,28 @@ class HAMDatasetException(Exception):
 
 
 class HAMDataset(Dataset):
-    """HAM10000 dataset."""
+    """
+    Returns dataset instance for HAM10000.
+
+    Args:
+        csv_file (str): file name of csv meta data.
+        root_dir (str): directory path to dataset folder.
+        training (bool): is mode training.
+        transform (transforms.Compose): list of transformations to apply to input data.
+        minimal (bool): return only lesion meta data.
+        num_test_imgs (int): Number of test images to set aside.
+    """
+
     NUM_CLASS = 6  # Lesion classes
 
     def __init__(self, csv_file, root_dir, training=True, transform=None, minimal=True, num_test_imgs=32):
-        self.ham_frame = pd.read_csv(os.path.join(root_dir, csv_file))
+        try:
+            self.ham_frame = pd.read_csv(os.path.join(root_dir, csv_file))
+        except FileNotFoundError:
+            raise HAMDatasetException("\nCould not read csv_file: %s\nEnsure root_dir points to dataset directory.\n"
+                                      "Download HAM10000 from "
+                                      "https://www.kaggle.com/kmader/skin-cancer-mnist-ham10000/home" %
+                                      os.path.join(root_dir, csv_file))
         self.root_dir = root_dir
         self.transform = transform
         self.minimal = minimal
