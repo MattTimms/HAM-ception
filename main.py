@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.utils.data
 import torchvision.utils as vutils
 
-from common.data_loader import import_ham10000
+from common.data_loader import import_ham_dataset
 from common.tensorboard_logger import TensorboardLogger
 
 from torch.optim import lr_scheduler
@@ -22,16 +22,17 @@ from tqdm import tqdm
 
 # Hyper parameters
 batch_size = 32
-num_epochs = 100
+num_epochs = 25
+
+logger_tensorboard = TensorboardLogger(log_dir='./')
 
 def main():
-
-
+    #
     model = models.inception_v3(pretrained=True)
 
     dir_dataset = './dataset/skin-cancer-mnist-ham10000/'
-    dataset = import_ham10000(dataset_root=dir_dataset)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True, num_workers=1)
+    dataset = import_ham_dataset(dataset_root=dir_dataset, training=False)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True, num_workers=4)
     n_class = 6  # pull from dataset output classes
 
     # Print layers
@@ -47,17 +48,16 @@ def main():
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, n_class)
 
-    # Stage-2 , Freeze all the layers till "Conv2d_4a_3*3"
-    ct = []
-    for name, child in model.named_children():
-        if "Conv2d_4a_3x3" in ct:
-            for params in child.parameters():
-                params.requires_grad = True
-        ct.append(name)
+    # # Stage-2 , Freeze all the layers till "Conv2d_4a_3*3"
+    # ct = []
+    # for name, child in model.named_children():
+    #     if "Conv2d_4a_3x3" in ct:
+    #         for params in child.parameters():
+    #             params.requires_grad = True
+    #     ct.append(name)
 
 
-
-    if True and torch.cuda.is_available():
+    if torch.cuda.is_available():
         device = torch.device("cuda:0")
     else:
         device = torch.device("cpu")
@@ -72,12 +72,17 @@ def main():
 
     ## Training
     from training import train_model
-    model = train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler, device, num_epochs=25):
+    model = train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device, logger_tensorboard, num_epochs=10)
 
 
-    # model_save_loc = "1" + ".pth"
-    # torch.save(model_ft.state_dict(), model_save_loc)
+    model_save_loc = "test" + ".pth"
+    torch.save(model.state_dict(), model_save_loc)
 
 
 if __name__ == '__main__':
+    args = {
+        'training': True,
+        'path_model': '1.pth',
+        'gpu': True,
+    }
     main()

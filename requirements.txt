@@ -1,3 +1,6 @@
+pytest
+tensorflow
+tensorboard
 torch
 torchvision
 tqdm

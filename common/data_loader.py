@@ -1,4 +1,7 @@
 import os
+from random import randint
+import shutil
+
 from PIL import Image
 import pandas as pd
 from torch.utils.data import Dataset
@@ -16,13 +19,21 @@ LESION_DICT = {
     }
 
 
-class HAM10000(Dataset):
+class HAMDatasetException(Exception):
+    pass
+
+
+class HAMDataset(Dataset):
     """HAM10000 dataset."""
-    def __init__(self, csv_file, root_dir, transform=None, minimal=True):
+    def __init__(self, csv_file, root_dir, training=True, transform=None, minimal=True):
         self.ham_frame = pd.read_csv(os.path.join(root_dir, csv_file))
         self.root_dir = root_dir
         self.transform = transform
         self.minimal = minimal
+
+        self.num_class = 6
+        self.num_test_imgs = 32
+        self.dir_test = os.path.join(self.root_dir, 'test')
         self.dict = {
             'nv': 0,
             'mel': 1,
@@ -33,40 +44,91 @@ class HAM10000(Dataset):
             'df':  6,
         }
 
+        self.training = training
+        if self.training:
+            self._create_test_images()
+        else:
+            self._load_test_images()
+
     def __len__(self):
         return len(self.ham_frame)
 
     def __getitem__(self, idx):
-        img_name = os.path.join(self.root_dir, 'HAM10000_images_part_1', self.ham_frame.iloc[idx, 1] + '.jpg')
-        if not os.path.exists(img_name):
-            img_name = os.path.join(self.root_dir, 'HAM10000_images_part_2', self.ham_frame.iloc[idx, 1] + '.jpg')
+        if self.training is True:
+            img_name = os.path.join(self.root_dir, 'HAM10000_images_part_1', self.ham_frame.iloc[idx, 1] + '.jpg')
+            if not os.path.exists(img_name):
+                img_name = os.path.join(self.root_dir, 'HAM10000_images_part_2', self.ham_frame.iloc[idx, 1] + '.jpg')
 
-        image = Image.open(img_name).convert('RGB')
-        if self.transform:
-            image = self.transform(image)
+            image = Image.open(img_name).convert('RGB')
+            if self.transform:
+                image = self.transform(image)
 
-        meta = self.ham_frame.iloc[0, :].drop('image_id').values.tolist()
-        if self.minimal:
-            meta = self.dict[meta[1]]
+            meta = self.ham_frame.iloc[0, :].drop('image_id').values.tolist()
+            if self.minimal:
+                meta = self.dict[meta[1]]
 
-        return image, meta
+            return image, meta
+
+    def _create_test_images(self):
+        if not os.path.exists(self.dir_test):
+            os.makedirs(self.dir_test)
+
+            for i in range(self.num_test_imgs):
+                # Select random image and drop from pandas ham frame
+                idx = randint(0, len(self.ham_frame)-1)
+                frame = self.ham_frame.iloc[idx, :]
+                self.ham_frame.drop(idx, inplace=True)
+
+                # Locate image
+                img_name = frame[1] + '.jpg'
+                img_path = os.path.join(self.root_dir, 'HAM10000_images_part_1', img_name)
+                if not os.path.exists(img_path):
+                    img_path = os.path.join(self.root_dir, 'HAM10000_images_part_2', img_name)
+
+                # Move image
+                img_out = os.path.join(self.dir_test, frame[1] + '.jpg')
+                shutil.copy(img_path, img_out)
+        else:
+            file_paths = [os.path.splitext(fp)[0] for fp in os.listdir(os.path.join(self.dir_test))]
+            for fp in file_paths:
+                idx = self.ham_frame.index[self.ham_frame['image_id'] == fp].tolist()
+                self.ham_frame.drop(idx, inplace=True)
+
+    def _load_test_images(self):
+        if not os.path.exists(self.dir_test):
+            raise HAMDatasetException("Test folder does not exist: %s" % self.dir_test)
+
+        file_names = [os.path.splitext(fp)[0] for fp in os.listdir(os.path.join(self.dir_test))]
+
+        if not file_names:
+            raise HAMDatasetException("Test folder is empty: %s" % self.dir_test)
+
+        new_frame = None
+        for fp in file_names:
+            idx = self.ham_frame.index[self.ham_frame['image_id'] == fp].tolist()
+            frame = self.ham_frame.iloc[idx, :]
+
+            if new_frame is None:
+                new_frame = frame
+            else:
+                new_frame = pd.concat([new_frame, frame])
+
+        self.ham_frame = new_frame
 
 
-def import_ham10000(dataset_root: str):
+def import_ham_dataset(dataset_root: str, training=True):
     """
     Returns dataset class instance for DataLoader. Downloads dataset if not present in dataset_root.
     """
-    dataset = HAM10000(
+    dataset = HAMDataset(
         csv_file='HAM10000_metadata.csv',
         root_dir=dataset_root,
+        training=training,
         transform=transforms.Compose([
-            transforms.Resize(299),  # will maintain aspect ratio if single int given
+            transforms.Resize(299),  # required size
             transforms.CenterCrop(299),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # required normalisation
         ])
     )
     return dataset
-
-
-
