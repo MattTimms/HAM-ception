@@ -4,6 +4,8 @@ import shutil
 
 from PIL import Image
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 
@@ -88,6 +90,15 @@ class HAMDataset(Dataset):
             meta = self.dict[meta[1]]
 
         return image, meta
+
+    def plot_dataset(self):
+        label_counts = self.ham_frame['dx'].value_counts()
+        plt.figure(figsize=(12, 6))
+        sns.barplot(label_counts.index, label_counts.values, alpha=0.9)
+        plt.xticks(rotation='vertical')
+        plt.xlabel('Image Labels', fontsize=12)
+        plt.ylabel('Counts', fontsize=12)
+        plt.show()
 
     def _create_test_images(self):
         """

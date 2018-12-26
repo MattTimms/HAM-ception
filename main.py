@@ -38,6 +38,7 @@ opt = parser.parse_args()
 def main():
     # Import dataset
     dataset = import_ham_dataset(dataset_root=opt.dataroot, training=opt.training)
+    # dataset.plot_dataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True,
                                              num_workers=opt.workers)
     n_class = dataset.NUM_CLASS

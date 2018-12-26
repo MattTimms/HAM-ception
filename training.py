@@ -22,7 +22,7 @@ def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler
         running_corrects = 0  # ttl num of correct predictions
 
         for inputs, metas in tqdm(dataloader):
-            labels = metas.to(device)
+            labels = Variable(metas).to(device)
             inputs = Variable(inputs).to(device)
 
             # Zero parameter gradients
@@ -32,23 +32,22 @@ def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler
             outputs = model(inputs)
             if type(outputs) == tuple:
                 outputs, _ = outputs
-            outputs = outputs.to(device)
 
             # Calculate loss
-            _, preds = torch.max(outputs.data, 1)
-            loss = criterion(outputs.data, labels)
+            _, preds = torch.max(outputs.data, 1)  # get the index of the max log-probability
+            loss = criterion(outputs, labels)
 
             # Backward + optimize
             loss.backward()
             optimizer.step()
 
             running_loss += loss.data
-            running_corrects += torch.sum(preds == labels.data).data
+            running_corrects += preds.cpu().eq(labels.cpu()).sum()  # torch.sum(preds == labels.data).data
 
         epoch_loss = running_loss.item() / dataset_size
         epoch_acc = running_corrects.item() / dataset_size
 
-        print('Loss: {:.4f} Acc: {:.4f}\n'.format(epoch_loss, epoch_acc))
+        print('Loss: {:.4f} Acc: {:.4f} lr: {:.2e}\n'.format(epoch_loss, epoch_acc, optimizer.param_groups[0]['lr']))
 
         # TensorBoard Logging
         info = {
@@ -80,21 +79,20 @@ def test_model(model, dataloader, dataset_size, criterion, device):
     running_corrects = 0  # ttl num of correct predictions
 
     for inputs, metas in tqdm(dataloader):
-        labels = metas.to(device)
+        labels = Variable(metas).to(device)
         inputs = Variable(inputs).to(device)
 
         # Forward pass
         outputs = model(inputs)
         if type(outputs) == tuple:
             outputs, _ = outputs
-        outputs = outputs.to(device)
 
         # Calculate loss
         _, preds = torch.max(outputs.data, 1)
         loss = criterion(outputs, labels)
 
         running_loss += loss.data
-        running_corrects += torch.sum(preds == labels.data).data
+        running_corrects += preds.cpu().eq(labels.cpu()).sum()
 
     model_loss = running_loss.item() / dataset_size
     model_acc = running_corrects.item() / dataset_size
