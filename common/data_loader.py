@@ -25,14 +25,15 @@ class HAMDatasetException(Exception):
 
 class HAMDataset(Dataset):
     """HAM10000 dataset."""
-    def __init__(self, csv_file, root_dir, training=True, transform=None, minimal=True):
+    NUM_CLASS = 6  # Lesion classes
+
+    def __init__(self, csv_file, root_dir, training=True, transform=None, minimal=True, num_test_imgs=32):
         self.ham_frame = pd.read_csv(os.path.join(root_dir, csv_file))
         self.root_dir = root_dir
         self.transform = transform
         self.minimal = minimal
 
-        self.num_class = 6
-        self.num_test_imgs = 32
+        self.num_test_imgs = num_test_imgs
         self.dir_test = os.path.join(self.root_dir, 'test')
         self.dict = {
             'nv': 0,

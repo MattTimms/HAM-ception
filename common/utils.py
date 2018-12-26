@@ -2,6 +2,11 @@ import torch
 import torch.nn as nn
 
 
+class Bunch(object):
+    def __init__(self, adict):
+        self.__dict__.update(adict)
+
+
 def unnormalise(img):
     min, max = float(img.min()), float(img.max())
     image = img.clamp_(min=min, max=max)
