@@ -85,7 +85,7 @@ class HAMDataset(Dataset):
             image = self.transform(image)
 
         # Load meta
-        meta = self.ham_frame.iloc[0, :].drop('image_id').values.tolist()
+        meta = self.ham_frame.iloc[idx, :].drop('image_id').values.tolist()
         if self.minimal:
             meta = self.dict[meta[1]]
 

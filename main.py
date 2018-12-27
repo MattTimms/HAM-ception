@@ -50,18 +50,26 @@ def main():
     # Load InceptionV3 network
     model = models.inception_v3(pretrained=True)
 
-    # Print network layer architecture
-    for name, child in model.named_children():
-        for name2, params in child.named_parameters():
-            print(name, name2, 'frozen=%r' % params.requires_grad)
-
     # Freeze all layers
     for params in model.parameters():
         params.requires_grad = False
 
+    # # Stage-2 , Freeze all the layers till "Conv2d_4a_3*3"
+    # ct = []
+    # for name, child in model.named_children():
+    #     if "Conv2d_4a_3x3" in ct:
+    #         for params in child.parameters():
+    #             params.requires_grad = True
+    #     ct.append(name)
+
     # Replace final layer
     num_ftrs = model.fc.in_features
     model.fc = nn.Linear(num_ftrs, n_class)
+
+    # Print network layer architecture
+    for name, child in model.named_children():
+        for name2, params in child.named_parameters():
+            print(name, name2, 'trainable=%r' % params.requires_grad)
 
     if opt.cuda and torch.cuda.is_available():
         device = torch.device("cuda:0")
@@ -80,9 +88,8 @@ def main():
 
     # # Training
     if opt.training:
-        model = train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device,
+        model = train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device, opt.model_path,
                             logger_tensorboard, num_epochs=opt.epochs)
-        torch.save(model.state_dict(), opt.model_path)
 
     # # Testing
     else:

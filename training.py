@@ -6,8 +6,8 @@ from torch.autograd import Variable
 from tqdm import tqdm
 
 
-def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler, device, logger_tensorboard,
-                num_epochs=25):
+def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler, device, model_path,
+                logger_tensorboard, num_epochs=25):
     since = time.time()
     best_model_wts = model.state_dict()
     best_acc = 0.0
@@ -61,6 +61,7 @@ def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler
         if epoch_acc > best_acc:
             best_acc = epoch_acc
             best_model_wts = model.state_dict()
+            torch.save(model.state_dict(), model_path)
 
     # Display stats
     time_elapsed = time.time() - since
