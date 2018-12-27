@@ -54,13 +54,13 @@ def main():
     for params in model.parameters():
         params.requires_grad = False
 
-    # # Stage-2 , Freeze all the layers till "Conv2d_4a_3*3"
-    # ct = []
-    # for name, child in model.named_children():
-    #     if "Conv2d_4a_3x3" in ct:
-    #         for params in child.parameters():
-    #             params.requires_grad = True
-    #     ct.append(name)
+    # Stage-2 , Freeze all the layers till "Conv2d_4a_3*3"
+    ct = []
+    for name, child in model.named_children():
+        if "Conv2d_4a_3x3" in ct:
+            for params in child.parameters():
+                params.requires_grad = True
+        ct.append(name)
 
     # Replace final layer
     num_ftrs = model.fc.in_features
