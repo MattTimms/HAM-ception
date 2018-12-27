@@ -38,7 +38,6 @@ opt = parser.parse_args()
 def main():
     # Import dataset
     dataset = import_ham_dataset(dataset_root=opt.dataroot, training=opt.training)
-    # dataset.plot_dataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True,
                                              num_workers=opt.workers)
     n_class = dataset.NUM_CLASS
@@ -88,8 +87,8 @@ def main():
 
     # # Training
     if opt.training:
-        model = train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device, opt.model_path,
-                            logger_tensorboard, num_epochs=opt.epochs)
+        train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device, opt.model_path,
+                    logger_tensorboard, num_epochs=opt.epochs)
 
     # # Testing
     else:
