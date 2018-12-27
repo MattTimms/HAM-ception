@@ -95,9 +95,11 @@ class HAMDataset(Dataset):
         label_counts = self.ham_frame['dx'].value_counts()
         plt.figure(figsize=(12, 6))
         sns.barplot(label_counts.index, label_counts.values, alpha=0.9)
+        plt.title('HAM Dataset Distribution')
         plt.xticks(rotation='vertical')
         plt.xlabel('Image Labels', fontsize=12)
         plt.ylabel('Counts', fontsize=12)
+        # plt.savefig('./images/data_distribution.png')
         plt.show()
 
     def _create_test_images(self):
