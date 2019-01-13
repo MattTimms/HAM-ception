@@ -32,19 +32,19 @@ parser.add_argument('--cuda', action='store_true', help='enables CUDA and GPU us
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--epochs', type=int, help='number of training epochs', default=10)
 parser.add_argument('--batch_size', type=int, default=32, help='input batch size')
-opt = parser.parse_args()
 
 
-def main():
+def main(opt):
+    # Check you can write to output path directory
+    if not os.access(os.path.split(opt.model_path)[0], os.W_OK):
+        raise OSError("--model_path is not a writeable path: %s" % opt.model_path)
+
     # Import dataset
-    dataset = import_ham_dataset(dataset_root=opt.dataroot, training=opt.training)
+    dataset = import_ham_dataset(dataset_root=opt.dataroot, training=opt.training,
+                                 model_path=os.path.split(opt.model_path)[0])
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True,
                                              num_workers=opt.workers)
     n_class = dataset.NUM_CLASS
-
-    # Check you can write to output path directory
-    if not os.access(os.path.split(opt.model_path)[0], os.W_OK):
-        raise ValueError("--model_path is not a writeable path: %s" % opt.model_path)
 
     # Load InceptionV3 network
     model = models.inception_v3(pretrained=True)
@@ -97,4 +97,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    opt = parser.parse_args()
+    main(opt)
