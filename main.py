@@ -26,7 +26,7 @@ from training import train_model, test_model
 # Argument parsing
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataroot', type=str, default='./dataset/skin-cancer-mnist-ham10000/', help='path to dataset')
-parser.add_argument('--training', action='store_true', help='train model')
+parser.add_argument('--training', default=True, action='store_true', help='train model')
 parser.add_argument('--model_path', default='./ham_model.pth', help='folder to output images and model checkpoints')
 parser.add_argument('--cuda', action='store_true', help='enables CUDA and GPU usage')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
