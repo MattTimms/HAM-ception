@@ -7,8 +7,8 @@ from torch.autograd import Variable
 from tqdm import tqdm
 
 
-def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler, device, model_path,
-                logger_tensorboard, num_epochs=25):
+def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler, device, outf, logger_tensorboard,
+                num_epochs=25):
     since = time.time()
     best_model_wts = model.state_dict()
     best_acc = 0.0
@@ -62,12 +62,11 @@ def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler
         if epoch_acc > best_acc:
             best_acc = epoch_acc
             best_model_wts = model.state_dict()
-            torch.save(model.state_dict(), os.path.join(model_path, 'weights.pth'))
+            torch.save(model.state_dict(), os.path.join(outf, 'weights.pth'))
 
     # Display stats
     time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(
-        time_elapsed // 60, time_elapsed % 60))
+    print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
     print('Best val Acc: {:4f}'.format(best_acc))
 
     # Load best model weights

@@ -1,15 +1,13 @@
 import os
 from random import randint
 
-import yaml
-
-from PIL import Image
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
-from torch.utils.data import Dataset
 import torchvision.transforms as transforms
-
+import yaml
+from PIL import Image
+from torch.utils.data import Dataset
 
 LESION_DICT = {
         'nv': 'Melanocytic nevi',
@@ -41,7 +39,7 @@ class HAMDataset(Dataset):
 
     NUM_CLASS = 7  # Lesion classes
 
-    def __init__(self, csv_file, root_dir, model_path, training=True, transform=None, minimal=True, num_test_imgs=32):
+    def __init__(self, csv_file, root_dir, outf, training=True, transform=None, minimal=True, num_test_imgs=32):
         try:
             self.ham_frame = pd.read_csv(os.path.join(root_dir, csv_file))
         except FileNotFoundError:
@@ -54,10 +52,7 @@ class HAMDataset(Dataset):
         self.minimal = minimal
 
         self.num_test_imgs = num_test_imgs
-        if os.path.splitext(model_path)[-1] in ['.yml', '.yaml']:
-            self.path_yaml = model_path
-        else:
-            self.path_yaml = os.path.join(model_path, 'session.yaml')
+        self.path_yaml = os.path.join(outf, 'session.yaml')
         self.dict = {
             'nv': 0,
             'mel': 1,
@@ -154,19 +149,19 @@ class HAMDataset(Dataset):
         self.ham_frame = new_frame.transpose().reset_index(drop=True)
 
 
-def import_ham_dataset(dataset_root, model_path, training=True):
+def import_ham_dataset(dataset_root, outf, training=True):
     """
     Returns dataset class instance for DataLoader. Downloads dataset if not present in dataset_root.
 
     Args:
         dataset_root (str): root directory of dataset.
-        model_path (str): path to save session's testing yaml.
+        outf (str): path to working directory.
         training (bool): return training or testing samples.
     """
     dataset = HAMDataset(
         csv_file='HAM10000_metadata.csv',
         root_dir=dataset_root,
-        model_path=model_path,
+        outf=outf,
         training=training,
         transform=transforms.Compose([
             transforms.Resize(299),  # required size

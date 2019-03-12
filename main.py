@@ -26,9 +26,9 @@ from training import train_model, test_model
 
 # Argument parsing
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataroot', type=str, default='./dataset/skin-cancer-mnist-ham10000/', help='path to dataset')
-parser.add_argument('--training', default=True, action='store_true', help='train model')
-parser.add_argument('--outf', default='./saved/runs/', help='folder to output images and model checkpoints')
+parser.add_argument('--dataroot', type=str, default='./../data/skin-cancer-mnist-ham10000/', help='path to dataset')
+parser.add_argument('--testing', default=False, help='path to trained model for evaluation')
+parser.add_argument('--outf', default='./saved/runs/', help='folder to working/output directory')
 parser.add_argument('--cuda', action='store_true', help='enables CUDA and GPU usage')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--epochs', type=int, help='number of training epochs', default=10)
@@ -37,13 +37,18 @@ parser.add_argument('--batch_size', type=int, default=32, help='input batch size
 
 def main(opt):
     # Check you can write to output path directory
-    opt.outf = os.path.join(opt.outf, datetime.datetime.now().strftime('%Y%m%dT%H%M%S'))
-    os.makedirs(opt.outf)
-    if not os.access(opt.outf, os.W_OK):
-        raise OSError("--model_path is not a writeable path: %s" % opt.outf)
+    testing = opt.testing if not opt.testing else True
+
+    if not testing:
+        opt.outf = os.path.join(opt.outf, datetime.datetime.now().strftime('%Y%m%dT%H%M%S'))
+        os.makedirs(opt.outf)
+        if not os.access(opt.outf, os.W_OK):
+            raise OSError("--outf is not a writeable path: %s" % opt.outf)
+    else:
+        opt.outf = os.path.split(opt.testing)[0]
 
     # Import dataset
-    dataset = import_ham_dataset(dataset_root=opt.dataroot, training=opt.training, model_path=opt.outf)
+    dataset = import_ham_dataset(dataset_root=opt.dataroot, training=not testing, outf=opt.outf)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True,
                                              num_workers=opt.workers)
     n_class = dataset.NUM_CLASS
@@ -88,13 +93,13 @@ def main(opt):
     logger_tensorboard = SummaryWriter(opt.outf)
 
     # # Training
-    if opt.training:
+    if not testing:
         train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device, opt.outf,
                     logger_tensorboard, num_epochs=opt.epochs)
 
     # # Testing
     else:
-        model.load_state_dict(torch.load(opt.model_path))
+        model.load_state_dict(torch.load(os.path.join(opt.testing), map_location=device))
         test_model(model, dataloader, len(dataset), criterion, device)
 
 

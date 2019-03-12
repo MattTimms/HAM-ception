@@ -17,7 +17,7 @@ Example:
 ## Setup
 ````pip install -r requirements.txt````  
 Download the HAM10000 dataset from [Kaggle](https://www.kaggle.com/kmader/skin-cancer-mnist-ham10000/home).
-Unzip and set --model_path to its directory.
+Unzip and set --dataroot to its directory.
 
 ## Results
 The following is in reference to the figure shown below. Session0 contained a pre-trained InceptionV3 model with
