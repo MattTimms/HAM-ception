@@ -3,8 +3,7 @@ pandas
 pytest
 matplotlib
 seaborn
-tensorflow
-tensorboard
+tensorboardX
 torch
 torchvision
 tqdm

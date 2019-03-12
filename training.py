@@ -1,4 +1,5 @@
 from __future__ import print_function, division
+import os
 import time
 
 import torch
@@ -47,21 +48,21 @@ def train_model(model, dataloader, dataset_size, criterion, optimizer, scheduler
         epoch_loss = running_loss.item() / dataset_size
         epoch_acc = running_corrects.item() / dataset_size
 
-        print('Loss: {:.4f} Acc: {:.4f} lr: {:.2e}\n'.format(epoch_loss, epoch_acc, optimizer.param_groups[0]['lr']))
+        print('Loss: {:.4f} Acc: {:.4f} lr: {:.2e}\n'.format(epoch_loss, epoch_acc,
+                                                             optimizer.param_groups[0]['lr']))
 
         # TensorBoard Logging
         info = {
             'Loss': epoch_loss,
             'Accuracy': epoch_acc,
         }
-        for tag, value in info.items():
-            logger_tensorboard.scalar_summary(tag, value, epoch)
+        logger_tensorboard.add_scalars("metrics", info, epoch)
 
         # Deep copy the model
         if epoch_acc > best_acc:
             best_acc = epoch_acc
             best_model_wts = model.state_dict()
-            torch.save(model.state_dict(), model_path)
+            torch.save(model.state_dict(), os.path.join(model_path, 'weights.pth'))
 
     # Display stats
     time_elapsed = time.time() - since

@@ -10,6 +10,7 @@ Usage:
 from __future__ import print_function, division
 import argparse
 import os
+import datetime
 
 import torch
 import torch.nn as nn
@@ -17,9 +18,9 @@ import torch.optim as optim
 import torch.utils.data
 from torch.optim import lr_scheduler
 import torchvision.models as models
+from tensorboardX import SummaryWriter
 
 from common.data_loader import import_ham_dataset
-from common.tensorboard_logger import TensorboardLogger
 from training import train_model, test_model
 
 
@@ -27,7 +28,7 @@ from training import train_model, test_model
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataroot', type=str, default='./dataset/skin-cancer-mnist-ham10000/', help='path to dataset')
 parser.add_argument('--training', default=True, action='store_true', help='train model')
-parser.add_argument('--model_path', default='./ham_model.pth', help='folder to output images and model checkpoints')
+parser.add_argument('--outf', default='./saved/runs/', help='folder to output images and model checkpoints')
 parser.add_argument('--cuda', action='store_true', help='enables CUDA and GPU usage')
 parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
 parser.add_argument('--epochs', type=int, help='number of training epochs', default=10)
@@ -36,12 +37,13 @@ parser.add_argument('--batch_size', type=int, default=32, help='input batch size
 
 def main(opt):
     # Check you can write to output path directory
-    if not os.access(os.path.split(opt.model_path)[0], os.W_OK):
-        raise OSError("--model_path is not a writeable path: %s" % opt.model_path)
+    opt.outf = os.path.join(opt.outf, datetime.datetime.now().strftime('%Y%m%dT%H%M%S'))
+    os.makedirs(opt.outf)
+    if not os.access(opt.outf, os.W_OK):
+        raise OSError("--model_path is not a writeable path: %s" % opt.outf)
 
     # Import dataset
-    dataset = import_ham_dataset(dataset_root=opt.dataroot, training=opt.training,
-                                 model_path=os.path.split(opt.model_path)[0])
+    dataset = import_ham_dataset(dataset_root=opt.dataroot, training=opt.training, model_path=opt.outf)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True,
                                              num_workers=opt.workers)
     n_class = dataset.NUM_CLASS
@@ -83,11 +85,11 @@ def main(opt):
     scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
 
     # Initiate TensorBoard logger
-    logger_tensorboard = TensorboardLogger(log_dir=os.path.split(opt.model_path)[0])
+    logger_tensorboard = SummaryWriter(opt.outf)
 
     # # Training
     if opt.training:
-        train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device, opt.model_path,
+        train_model(model, dataloader, len(dataset), criterion, optimizer, scheduler, device, opt.outf,
                     logger_tensorboard, num_epochs=opt.epochs)
 
     # # Testing

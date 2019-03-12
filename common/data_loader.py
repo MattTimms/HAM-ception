@@ -39,7 +39,7 @@ class HAMDataset(Dataset):
         num_test_imgs (int): Number of test images to set aside.
     """
 
-    NUM_CLASS = 6  # Lesion classes
+    NUM_CLASS = 7  # Lesion classes
 
     def __init__(self, csv_file, root_dir, model_path, training=True, transform=None, minimal=True, num_test_imgs=32):
         try:
