@@ -1,8 +1,6 @@
 .idea/
 dataset/*
 skin-cancer-mnist-ham10000.zip
-pretrained/*
-!pretrained/session2/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

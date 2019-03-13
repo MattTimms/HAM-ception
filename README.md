@@ -11,7 +11,7 @@ Usage:
     main.py (-h | --help)  
      
 Example:  
-    python main.py --cuda --training --dataroot ./dataset/skin-cancer-mnist-ham10000/ --workers=8  
+    python main.py --cuda --dataroot ../data/skin-cancer-mnist-ham10000/ --workers=8  
 ````
 
 ## Setup
@@ -20,18 +20,15 @@ Download the HAM10000 dataset from [Kaggle](https://www.kaggle.com/kmader/skin-c
 Unzip and set --dataroot to its directory.
 
 ## Results
-The following is in reference to the figure shown below. Session0 contained a pre-trained InceptionV3 model with
- a new trainable fully-connected final layer. Results after 10 epochs were above benchmark accuracy.
- Session1 increase training iterations to 25 epochs; accuracy saturated. Session2 unfroze model layers proceeding 
- Conv2d_4a_3x3 and gave best results - No further training has since been conducted.  
- Tests are conducted on 32 samples not seen during training.
+Training was performed on a pre-trained InceptionV3 model with unfrozne model layers proceeding 
+ Conv2d_4a_3x3 and a new fully-connected final layer. Results below are over 10 epochs at a batch size of 32.
  
 ```
-Session2 Results
+Results
 Training:
-    Loss: 0.0017 Acc: 0.9807
+    Loss: 0.0017 Acc: 0.9943
 Testing:
-    Loss: 0.0053 Acc: 0.9375
+    Loss: 0.0238 Acc: 0.8750
 ```   
 
 ![Model results image... should've loaded here](https://github.com/MattTimms/HAM10000/blob/master/images/plot.png)
