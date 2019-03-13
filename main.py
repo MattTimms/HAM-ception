@@ -27,12 +27,12 @@ from training import train_model, test_model
 # Argument parsing
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataroot', type=str, default='./../data/skin-cancer-mnist-ham10000/', help='path to dataset')
-parser.add_argument('--testing', default=False, help='path to trained model for evaluation')
-parser.add_argument('--outf', default='./saved/runs/', help='folder to working/output directory')
+parser.add_argument('--testing', default=False, help='path to trained model for evaluation [default: False]')
+parser.add_argument('--outf', default='./saved/runs/', help='folder to working/output directory [default: saved/runs/]')
 parser.add_argument('--cuda', action='store_true', help='enables CUDA and GPU usage')
-parser.add_argument('--workers', type=int, help='number of data loading workers', default=2)
-parser.add_argument('--epochs', type=int, help='number of training epochs', default=10)
-parser.add_argument('--batch_size', type=int, default=32, help='input batch size')
+parser.add_argument('--workers', type=int, help='number of data loading workers [default: 0]', default=0)
+parser.add_argument('--epochs', type=int, help='number of training epochs [default: 10]', default=10)
+parser.add_argument('--batch_size', type=int, default=32, help='input batch size [default: 32]')
 
 
 def main(opt):
